@@ -9,9 +9,9 @@ import fftw3
 ## Tensor Helpers
 #############################################################
 type
-  Metadata = tuple[offset: int, strides, shape: seq[int]]
+  TupShape = tuple[offset: int, strides, shape: seq[int]]
 
-proc getMeta[T](t: Tensor[T]): Metadata =
+proc getMeta[T](t: Tensor[T]): TupShape =
   result.offset = t.offset
   result.strides = t.strides.toSeq
   result.shape = t.shape.toSeq
@@ -36,13 +36,13 @@ func get3DCoord(index: int, shape: seq[int]): array[3, int] {.inline.} =
 #############################################################
 ## OpenMp
 #############################################################
-template circshift_openmp_impl[T](inBuf, outBuf: ptr UncheckedArray[T], m: Metadata, shifts: seq[int], getCoord: untyped) =
+template circshift_openmp_impl[T](inBuf, outBuf: ptr UncheckedArray[T], m: TupShape, shifts: seq[int], getCoord: untyped) =
   let iterableSize = foldl(m.shape, a*b) - 1
   for idx in 0||iterableSize:
     let indices = getCoord(idx, m.shape)
-    outBuf[getShiftedIndex(m, shifts, indices)] = inBuf[getIndex(m, indices)]
+    outBuf[getShiftedIndex(m.offset, m.strides, m.shape, shifts, indices)] = inBuf[getIndex(m.offset, m.strides, m.shape, indices)]
 
-proc circshift_openmp[T](inBuf, outBuf: ptr UncheckedArray[T], m: Metadata, shifts: seq[int]) =
+proc circshift_openmp[T](inBuf, outBuf: ptr UncheckedArray[T], m: TupShape, shifts: seq[int]) =
   if shifts.len == 2:
     var getCoord = get2DCoord
     circshift_openmp_impl(inBuf, outBuf, m, shifts, getCoord)

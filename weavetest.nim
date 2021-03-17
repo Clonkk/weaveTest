@@ -1,10 +1,11 @@
 import typetraits
 import sequtils
 
-import arraymancer
-import fftw3
 import benchy
+import arraymancer
 
+import fftw3
+import fftw3/fftshift_weave
 import fftshift_openmp
 proc testMe(DIMS: openArray[int]) =
   echo "RUNNING BENCH ON >>", DIMS
